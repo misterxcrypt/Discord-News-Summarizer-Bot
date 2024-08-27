@@ -1,1 +1,1 @@
-# Discord-News-Summarizer-Bot
+# news-summarizer-discord-bot
