@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 from discord.ext import commands
 from dotenv import load_dotenv
 import os
+from keybert import KeyBERT  # Import KeyBERT for keyword extraction
 
 load_dotenv()
 
@@ -15,8 +16,10 @@ HF_API_URL = "https://api-inference.huggingface.co/models/facebook/bart-large-cn
 MAX_INPUT_LENGTH = 5104
 
 intents = discord.Intents.default()
-intents.message_content = True 
+intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=intents)
+
+kw_model = KeyBERT()  # Initialize KeyBERT
 
 def extract_text_from_url(url):
     try:
@@ -37,7 +40,7 @@ def summarize_with_huggingface(text_chunk):
  
     payload = {
         "inputs": text_chunk,
-        "parameters": {"min_length": 50, "do_sample": False} 
+        "parameters": {"min_length": 50, "do_sample": False}
     }
     
     response = requests.post(HF_API_URL, headers=headers, json=payload)
@@ -50,10 +53,15 @@ def summarize_with_huggingface(text_chunk):
 def recursive_summary(text):
     summaries = []
     for i in range(0, len(text), MAX_INPUT_LENGTH):
-        text_chunk = text[i:i+MAX_INPUT_LENGTH] 
+        text_chunk = text[i:i+MAX_INPUT_LENGTH]
         summary = summarize_with_huggingface(text_chunk)
         summaries.append(summary)
-    return " ".join(summaries) 
+    return " ".join(summaries)
+
+# Function to extract keywords/tags
+def extract_tags(summary):
+    tags = kw_model.extract_keywords(summary, keyphrase_ngram_range=(1, 2), stop_words='english', top_n=5)
+    return [tag[0] for tag in tags]
 
 @bot.event
 async def on_ready():
@@ -77,10 +85,14 @@ async def on_message(message):
                 
                 if len(summary) > 2000:
                     truncated_summary = summary[:1800] + "..."
-                    await message.channel.send(f"**Summary (truncated):**\n{truncated_summary}")
+                    await message.channel.send(f"**Summary (truncated):**\n{truncated_summary}\n[Read the full article here]({url})")
                     await message.channel.send("Summary is too long, it's better to read for yourself.")
                 else:
-                    await message.channel.send(f"**Summary:**\n{summary}")
+                    await message.channel.send(f"**Summary:**\n{summary}\n[Read the full article here]({url})")
+                
+                # Extract and send tags
+                tags = extract_tags(summary)
+                await message.channel.send(f"**Tags:** {', '.join(tags)}")
 
     await bot.process_commands(message)
 
