@@ -91,21 +91,22 @@ async def on_message(message):
         if url:
             text = extract_text_from_url(url)
             # print(f"Text:\n {text}")
-            if "Error" in text:
-                await message.channel.send(text)
+            # if "Error" in text:
+            #     print(text)
+            #     await message.channel.send("Error")
+            # if True:
+            summary = recursive_summary(text)
+            
+            if len(summary) > 2000:
+                truncated_summary = summary[:1800] + "..."
+                await message.channel.send(f"**Summary (truncated):**\n{truncated_summary}\n[Read the full article here]({url})")
+                await message.channel.send("Summary is too long, it's better to read for yourself.")
             else:
-                summary = recursive_summary(text)
-                
-                if len(summary) > 2000:
-                    truncated_summary = summary[:1800] + "..."
-                    await message.channel.send(f"**Summary (truncated):**\n{truncated_summary}\n[Read the full article here]({url})")
-                    await message.channel.send("Summary is too long, it's better to read for yourself.")
-                else:
-                    await message.channel.send(f"**Summary:**\n{summary}\n[Read the full article here]({url})")
-                
-                # Extract and send tags
-                tags = extract_tags(summary)
-                await message.channel.send(f"**Tags:** {', '.join(tags)}")
+                await message.channel.send(f"**Summary:**\n{summary}\n[Read the full article here]({url})")
+            
+            # Extract and send tags
+            tags = extract_tags(summary)
+            await message.channel.send(f"**Tags:** {', '.join(tags)}")
 
     await bot.process_commands(message)
 
