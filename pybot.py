@@ -29,6 +29,7 @@ def extract_text_and_summary_from_url(url):
         article.parse()
         article.nlp()
         full_text = article.text
+        print(full_text)
         summary = article.summary
         return full_text, summary
     except Exception as e:

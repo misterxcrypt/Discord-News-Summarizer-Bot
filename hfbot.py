@@ -3,6 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 from discord.ext import commands
 from dotenv import load_dotenv
+from newspaper import Article
 import os
 from keybert import KeyBERT  # Import KeyBERT for keyword extraction
 
@@ -13,7 +14,7 @@ HF_API_TOKEN = os.getenv('HUGGINGFACE_API_TOKEN')
 
 HF_API_URL = "https://api-inference.huggingface.co/models/facebook/bart-large-cnn"
 
-MAX_INPUT_LENGTH = 5104
+MAX_INPUT_LENGTH = 3000
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -22,25 +23,36 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 kw_model = KeyBERT()  # Initialize KeyBERT
 
 def extract_text_from_url(url):
-    try:
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0) Gecko/20100101 Firefox/91.0'
-        }
-        response = requests.get(url, headers=headers)
-        soup = BeautifulSoup(response.text, 'html.parser')
+    # try:
+    #     headers = {
+    #         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0) Gecko/20100101 Firefox/91.0'
+    #     }
+    #     response = requests.get(url, headers=headers)
+    #     # print(response.text)
+    #     soup = BeautifulSoup(response.text, 'html.parser')
         
-        paragraphs = soup.find_all('p')
-        text = " ".join([para.get_text() for para in paragraphs])
-        return text
+    #     paragraphs = soup.find_all('p')
+    #     text = " ".join([para.get_text() for para in paragraphs])
+    #     return text
+    # except Exception as e:
+    #     return f"Error fetching the content: {str(e)}"
+    try:
+        article = Article(url)
+        article.download()
+        article.parse()
+        article.nlp()
+        full_text = article.text
+        print(full_text)
+        return full_text
     except Exception as e:
-        return f"Error fetching the content: {str(e)}"
+        return None, f"Error fetching the content: {str(e)}"
 
 def summarize_with_huggingface(text_chunk):
     headers = {"Authorization": f"Bearer {HF_API_TOKEN}"}
  
     payload = {
         "inputs": text_chunk,
-        "parameters": {"min_length": 50, "do_sample": False}
+        "parameters": {"min_length": 100, "do_sample": False}
     }
     
     response = requests.post(HF_API_URL, headers=headers, json=payload)
@@ -78,6 +90,7 @@ async def on_message(message):
         
         if url:
             text = extract_text_from_url(url)
+            # print(f"Text:\n {text}")
             if "Error" in text:
                 await message.channel.send(text)
             else:
