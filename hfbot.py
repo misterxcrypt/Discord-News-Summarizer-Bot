@@ -5,7 +5,6 @@ from discord.ext import commands
 from dotenv import load_dotenv
 from newspaper import Article
 import os
-from keybert import KeyBERT  # Import KeyBERT for keyword extraction
 
 load_dotenv()
 
@@ -21,7 +20,7 @@ intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 
-kw_model = KeyBERT()  # Initialize KeyBERT
+# kw_model = KeyBERT()  # Initialize KeyBERT
 
 def extract_text_from_url(url):
     # try:
