@@ -11,6 +11,7 @@ load_dotenv()
 
 DISCORD_BOT_TOKEN = os.getenv('DISCORD_BOT_TOKEN')
 HF_API_TOKEN = os.getenv('HUGGINGFACE_API_TOKEN')
+CHANNEL_ID = os.getenv('CHANNEL_ID')
 
 HF_API_URL = "https://api-inference.huggingface.co/models/facebook/bart-large-cnn"
 
@@ -71,9 +72,34 @@ def recursive_summary(text):
     return " ".join(summaries)
 
 # Function to extract keywords/tags
-def extract_tags(summary):
-    tags = kw_model.extract_keywords(summary, keyphrase_ngram_range=(1, 2), stop_words='english', top_n=5)
-    return [tag[0] for tag in tags]
+# def extract_tags(summary):
+#     tags = kw_model.extract_keywords(summary, keyphrase_ngram_range=(1, 2), stop_words='english', top_n=5)
+#     return [tag[0] for tag in tags]
+
+HF_KEYPHRASE_URL = "https://api-inference.huggingface.co/models/ml6team/keyphrase-extraction-distilbert-inspec"
+
+def extract_tags_with_huggingface(text, retries=3, wait_time=10, max_tags=5):
+    headers = {"Authorization": f"Bearer {HF_API_TOKEN}"}
+    payload = {"inputs": text}
+
+    for attempt in range(retries):
+        response = requests.post(HF_KEYPHRASE_URL, headers=headers, json=payload)
+
+        if response.status_code == 200:
+            result = response.json()
+            # Extract keyphrases from the model's output
+            keyphrases = [phrase['word'] for phrase in result]
+            return keyphrases[:max_tags]
+        else:
+            error_message = response.json().get("error", "Unknown error")
+            
+            if "loading" in error_message.lower():
+                print(f"Model is still loading. Retrying in {wait_time} seconds... (Attempt {attempt + 1}/{retries})")
+                time.sleep(wait_time)  # Wait for some time before retrying
+            else:
+                return [f"Error extracting tags: {response.text}"]
+
+    return ["Error: Model is still loading after multiple attempts. Please try again later."]
 
 @bot.event
 async def on_ready():
@@ -81,7 +107,7 @@ async def on_ready():
 
 @bot.event
 async def on_message(message):
-    if bot.user.mentioned_in(message) and "http" in message.content:
+    if str(message.channel.id) == CHANNEL_ID and bot.user.mentioned_in(message) and "http" in message.content:
         url = None
         for word in message.content.split():
             if word.startswith("http"):
@@ -105,7 +131,7 @@ async def on_message(message):
                 await message.channel.send(f"**Summary:**\n{summary}\n[Read the full article here]({url})")
             
             # Extract and send tags
-            tags = extract_tags(summary)
+            tags = extract_tags_with_huggingface(summary)
             await message.channel.send(f"**Tags:** {', '.join(tags)}")
 
     await bot.process_commands(message)
