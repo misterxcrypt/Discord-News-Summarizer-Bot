@@ -7,7 +7,7 @@ from newspaper import Article
 import os
 import logging
 from logging.handlers import RotatingFileHandler
-import ntlk
+import nltk
 
 # Load environment variables
 load_dotenv()
