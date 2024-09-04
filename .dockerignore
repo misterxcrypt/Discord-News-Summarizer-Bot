@@ -1,0 +1,4 @@
+venv
+.env
+pybot.py
+.git
