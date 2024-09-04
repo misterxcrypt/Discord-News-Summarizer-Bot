@@ -10,8 +10,8 @@ from logging.handlers import RotatingFileHandler
 import nltk
 
 # Load environment variables
-load_dotenv()
 nltk.download('punkt_tab')
+load_dotenv()
 
 # Discord and HuggingFace tokens
 DISCORD_BOT_TOKEN = os.getenv('DISCORD_BOT_TOKEN')
