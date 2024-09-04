@@ -1,0 +1,9 @@
+version: '3'
+services:
+  new-summarizer-bot:
+    image: mrxcrypt/new-summarizer-bot:latest
+    container_name: news-summarizer-bot
+    env_file:
+      - .env
+    command: ["python", "hfbot.py"]
+    restart: unless-stopped
