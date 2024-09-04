@@ -7,9 +7,11 @@ from newspaper import Article
 import os
 import logging
 from logging.handlers import RotatingFileHandler
+import ntlk
 
 # Load environment variables
 load_dotenv()
+nltk.download('punkt_tab')
 
 # Discord and HuggingFace tokens
 DISCORD_BOT_TOKEN = os.getenv('DISCORD_BOT_TOKEN')
