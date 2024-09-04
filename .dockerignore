@@ -1,5 +1,5 @@
+.git
 venv
 .env
 pybot.py
-.git
 bot_log.log
