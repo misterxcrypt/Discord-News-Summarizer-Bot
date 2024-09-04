@@ -2,3 +2,4 @@
 venv
 .env
 pybot.py
+bot_log.log
