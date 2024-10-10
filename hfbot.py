@@ -114,6 +114,9 @@ async def on_ready():
 
 @bot.event
 async def on_message(message):
+    # print(message.channel.id)
+    # print(message.content)
+    # print(bot.user.mentioned_in(message))
     if str(message.channel.id) == CHANNEL_ID and bot.user.mentioned_in(message) and "http" in message.content:
         url = None
         for word in message.content.split():
@@ -130,6 +133,7 @@ async def on_message(message):
                 logger.error(f"Error during text extraction: {text[1]}")
                 await message.channel.send("Error fetching content.")
                 return
+            # await message.channel.send(f"Original Text Extracted: {text}")
             
             # Summarize the extracted text
             summary = recursive_summary(text)
